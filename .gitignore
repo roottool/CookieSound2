@@ -261,3 +261,4 @@ __pycache__/
 *.pyc
 /CookieSound2/cookiesound.png
 /CookieSound2/sound
+/CookieSound2/config.ini

@@ -30,12 +30,13 @@ def login(nickname, username='user', password = None, realname='Marina', hostnam
 def send_msg(msg): # sends messages to the target.
     IRC.send(bytes("PRIVMSG "+ CHANNEL +" :"+ msg +"\n", CHARCODE))
 
-def wait_connection():
+def wait_connection(volume):
     while(1):
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
         if msg[3] == ":Welcome" and msg[2] == NICKNAME: #TODO splash screen
             sound = mixer.Sound("sound\\haittyatta.ogg")
+            sound.set_volume(volume / 100)
             sound.play()
             break
 
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     volume = config.getfloat("Other", "volume")
     mixer.music.set_volume(volume / 100)
 
-    wait_connection()
+    wait_connection(volume)
 
     th_me = threading.Thread(target=keyhook(volume))
     th_me.start()
