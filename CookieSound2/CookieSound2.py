@@ -16,7 +16,6 @@ def irc_conn():
 #simple function to send data through the socket
 def send_data(command):
     status = IRC.send(bytes((command + "\r\n").encode(CHARCODE))) # unicode -> iso2022_jp
-    print(command)
     if status == -1 :raise Exception('send_data error', status)
 
 #join the channel
@@ -36,14 +35,17 @@ def wait_connection():
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
         if msg[3] == ":Welcome" and msg[2] == NICKNAME: #TODO splash screen
+            sound = mixer.Sound("sound\\haittyatta.ogg")
+            sound.play()
             break
 
-def keyhook():
+def keyhook(volume):
     while(1):
         str = input(NICKNAME + ":")
         if str in OGGlist: 
             send_msg(str)
             sound = mixer.Sound("sound\\" + str + ".ogg")
+            sound.set_volume(volume / 100)
             sound.play()
         elif str in MP3list:
             send_msg(str)
@@ -51,12 +53,18 @@ def keyhook():
             mixer.music.play()
 
 if __name__ == '__main__':
-    #some user data, change as per your taste
     CHARCODE = 'iso2022_jp'
-    SERVER = 'irc.ircnet.ne.jp'
-    PORT = 6664
-    NICKNAME = 'defpo'
-    CHANNEL = '#cookie_channel'
+    
+    config = configparser.RawConfigParser()
+    if os.path.exists("config.ini"):
+        config.read("config.ini")
+    else:
+        sys.exit()
+
+    SERVER = config.get("Irc_server", "address")#  'irc.ircnet.ne.jp'
+    PORT = config.getint("Irc_server", "port")
+    CHANNEL = config.get("Irc_server", "channel")
+    NICKNAME = config.get("Irc_server", "nickname")
 
     #open a socket to handle the connection
     IRC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -78,9 +86,12 @@ if __name__ == '__main__':
     OGGlist.sort()
     MP3list.sort()
     
+    volume = config.getfloat("Other", "volume")
+    mixer.music.set_volume(volume / 100)
+
     wait_connection()
 
-    th_me = threading.Thread(target=keyhook)
+    th_me = threading.Thread(target=keyhook(volume))
     th_me.start()
 
     while (1):
@@ -96,6 +107,7 @@ if __name__ == '__main__':
             if filename in OGGlist: 
                 print(send_name[0] + ":" + filename)
                 sound = mixer.Sound("sound\\" + filename + ".ogg")
+                sound.set_volume(volume / 100)
                 sound.play()
             elif filename in MP3list:
                 print(send_name[0] + ":" + filename)
