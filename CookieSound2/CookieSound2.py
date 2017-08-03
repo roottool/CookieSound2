@@ -40,18 +40,42 @@ def wait_connection(volume):
             sound.play()
             break
 
-def keyhook(volume):
-    while(1):
+def receive(volume, OGGlist, MP3list):
+    while True:
+        buffer = IRC.recv(1024)
+        msg = str.split(str(buffer))
+        if msg[0] == "PING":                #check if server have sent ping command
+            send_data("PONG %s" % msg[1])   #answer with pong as per RFC 1459
+        if msg[1] == 'PRIVMSG':
+            tmp_sname = re.sub(r"^b':", "", msg[0])
+            send_name = tmp_sname.split("!")
+            tmp_fname = re.sub(r"^:", "", msg[3])
+            filename = re.sub(r"\\r\\n'$", "", tmp_fname)
+            if filename in OGGlist: 
+                print(send_name[0] + ":" + filename)
+                sound = mixer.Sound("sound/" + filename + ".ogg")
+                sound.set_volume(volume / 100)
+                sound.play()
+            elif filename in MP3list:
+                print(send_name[0] + ":" + filename)
+                mixer.music.load("sound/csr/" + filename + ".mp3")
+                mixer.music.play()
+
+
+def keyhook(NICKNAME, volume, OGGlist, MP3list):
+    while True:
         str = input(NICKNAME + ":")
         if str in OGGlist: 
             send_msg(str)
-            sound = mixer.Sound("sound\\" + str + ".ogg")
+            sound = mixer.Sound("sound/" + str + ".ogg")
             sound.set_volume(volume / 100)
             sound.play()
         elif str in MP3list:
             send_msg(str)
-            mixer.music.load("sound\\csr\\" + str + ".mp3")
+            mixer.music.load("sound/csr/" + str + ".mp3")
             mixer.music.play()
+
+
 
 if __name__ == '__main__':
     CHARCODE = 'iso2022_jp'
@@ -92,31 +116,12 @@ if __name__ == '__main__':
 
     wait_connection(volume)
 
-    th_me = threading.Thread(target=keyhook(volume))
-    th_me.start()
 
-    while (1):
-        buffer = IRC.recv(1024)
-        msg = str.split(str(buffer))
-        if msg[0] == "PING":                #check if server have sent ping command
-            send_data("PONG %s" % msg[1])   #answer with pong as per RFC 1459
-        if msg[1] == 'PRIVMSG':
-            tmp_sname = re.sub(r"^b':", "", msg[0])
-            send_name = tmp_sname.split("!")
-            tmp_fname = re.sub(r"^:", "", msg[3])
-            filename = re.sub(r"\\r\\n'$", "", tmp_fname)
-            if filename in OGGlist: 
-                print(send_name[0] + ":" + filename)
-                sound = mixer.Sound("sound\\" + filename + ".ogg")
-                sound.set_volume(volume / 100)
-                sound.play()
-            elif filename in MP3list:
-                print(send_name[0] + ":" + filename)
-                mixer.music.load("sound\\csr\\" + filename + ".mp3")
-                mixer.music.play()
+    th_keyhook = threading.Thread(target=keyhook, args=(NICKNAME, volume, OGGlist, MP3list))
+    #th_receive = threading.Thread(target=receive, args=(volume, OGGlist, MP3list))
+    th_keyhook.start()
+    #th_receive.start()
 
-            #filetxt = open('/tmp/msg.txt', 'a+') #open an arbitrary file to store the messages
-            #nick_name = msg[0][:string.find(msg[0],"!")] #if a private message is sent to you catch it
-            #message = ' '.join(msg[3:])
-            #filetxt.write(string.lstrip(nick_name, ':') + ' -&gt; ' + string.lstrip(message, ':') + '\n') #write to the file
-            #filetxt.flush() #don't wait for next message, write it now!
+    receive(volume, OGGlist, MP3list)
+
+    #while True None

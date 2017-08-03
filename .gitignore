@@ -262,3 +262,6 @@ __pycache__/
 /CookieSound2/cookiesound.png
 /CookieSound2/sound
 /CookieSound2/config.ini
+/CookieSound2/build/exe.win-amd64-3.6
+/CookieSound2/setup.py
+/CookieSound2/setup - コピー.py
