@@ -8,24 +8,29 @@ import threading
 import configparser
 
 from pygame import mixer
+from pyhooked import Hook, KeyboardEvent
+
+str_input = ''
+
+
 
 #open a connection with the server
 def irc_conn():
     IRC.connect((SERVER, PORT))
 
-#simple function to send data through the socket
-def send_data(command):
-    status = IRC.send(bytes((command + "\r\n").encode(CHARCODE))) # unicode -> iso2022_jp
-    if status == -1 :raise Exception('send_data error', status)
+#send login data (customizable)
+def login(nickname, username='user', password = None, realname='Marina', hostname='Helena', servername='Server'):
+    send_data("USER %s %s %s %s" % (username, hostname, servername, realname))
+    send_data("NICK " + nickname)
 
 #join the channel
 def join(channel):
     send_data("JOIN %s" % channel)
 
-#send login data (customizable)
-def login(nickname, username='user', password = None, realname='Marina', hostname='Helena', servername='Server'):
-    send_data("USER %s %s %s %s" % (username, hostname, servername, realname))
-    send_data("NICK " + nickname)
+#simple function to send data through the socket
+def send_data(command):
+    status = IRC.send(bytes((command + "\r\n").encode(CHARCODE))) # unicode -> iso2022_jp
+    if status == -1 :raise Exception('send_data error', status)
 
 def send_msg(msg): # sends messages to the target.
     IRC.send(bytes("PRIVMSG "+ CHANNEL +" :"+ msg +"\n", CHARCODE))
@@ -60,22 +65,44 @@ def receive(volume, OGGlist, MP3list):
                 print(send_name[0] + ":" + filename)
                 mixer.music.load("sound/csr/" + filename + ".mp3")
                 mixer.music.play()
-
+                
 
 def keyhook(NICKNAME, volume, OGGlist, MP3list):
     while True:
-        str = input(NICKNAME + ":")
-        if str in OGGlist: 
-            send_msg(str)
-            sound = mixer.Sound("sound/" + str + ".ogg")
-            sound.set_volume(volume / 100)
-            sound.play()
-        elif str in MP3list:
-            send_msg(str)
-            mixer.music.load("sound/csr/" + str + ".mp3")
-            mixer.music.play()
+        hk = Hook()  # make a new instance of PyHooked
+        hk.handler = handle_events  # add a new shortcut ctrl+a, or triggered on mouseover of (300,400)
+        hk.hook() # hook into the events, and listen to the presses
 
+def handle_events(args):
+    global str_input
 
+    if isinstance(args, KeyboardEvent):
+        if args.current_key == 'Return' and args.event_type == 'key up':
+            if str_input in OGGlist: 
+                print(NICKNAME + ':' + str_input)
+                send_msg(str_input)
+                sound = mixer.Sound("sound/" + str_input + ".ogg")
+                sound.set_volume(volume / 100)
+                sound.play()
+            elif str_input in MP3list:
+                print(NICKNAME + ':' + str_input)
+                send_msg(str_input)
+                mixer.music.load("sound/csr/" + str_input + ".mp3")
+                mixer.music.play()
+            str_input = ''
+        elif args.current_key == 'Back' and args.event_type == 'key up':
+            str_input = str_input[:-1]
+        elif (65 <= args.key_code and args.key_code <= 90) and args.event_type == 'key up':
+            str_input = str_input + args.current_key.lower()
+        elif (48 <= args.key_code and args.key_code <= 57) and args.event_type == 'key up':
+            str_input += args.current_key
+        elif (96 <= args.key_code and args.key_code <= 105) and args.event_type == 'key up':
+            str_input += args.current_key[-1]
+        elif args.current_key == 'Oem_Minus' and args.event_type == 'key up':
+            str_input += '-'
+        elif args.current_key == 'Oem_7' and args.event_type == 'key up':
+            str_input += '^'
+        
 
 if __name__ == '__main__':
     CHARCODE = 'iso2022_jp'
@@ -86,7 +113,7 @@ if __name__ == '__main__':
     else:
         sys.exit()
 
-    SERVER = config.get("Irc_server", "address")#  'irc.ircnet.ne.jp'
+    SERVER = config.get("Irc_server", "address")
     PORT = config.getint("Irc_server", "port")
     CHANNEL = config.get("Irc_server", "channel")
     NICKNAME = config.get("Irc_server", "nickname")
@@ -116,11 +143,8 @@ if __name__ == '__main__':
 
     wait_connection(volume)
 
-
     th_keyhook = threading.Thread(target=keyhook, args=(NICKNAME, volume, OGGlist, MP3list))
-    #th_receive = threading.Thread(target=receive, args=(volume, OGGlist, MP3list))
     th_keyhook.start()
-    #th_receive.start()
 
     receive(volume, OGGlist, MP3list)
 
