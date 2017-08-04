@@ -2,16 +2,35 @@ import socket
 import string
 import re
 import os
+import time
 import glob
 import threading
-#TODO Read config.ini
+#TODO Read config.ini all contents
 import configparser
 
 from pygame import mixer
 from pyhooked import Hook, KeyboardEvent
 
-str_input = ''
+import youtube_dl
+import pyperclip
 
+str_input = ''
+sound = None
+
+class MyLogger(object):
+    def debug(self, msg):
+        pass
+
+    def warning(self, msg):
+        pass
+
+    def error(self, msg):
+        print(msg)
+
+
+def my_hook(d):
+    if d['status'] == 'finished':
+        print('Done downloading, now converting ...')
 
 
 #open a connection with the server
@@ -40,9 +59,11 @@ def wait_connection(volume):
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
         if msg[3] == ":Welcome" and msg[2] == NICKNAME: #TODO splash screen
-            sound = mixer.Sound("sound\\haittyatta.ogg")
-            sound.set_volume(volume / 100)
-            sound.play()
+            print("Join " + CHANNEL)
+            if os.path.exists("sound\\haittyatta.ogg"):
+                sound = mixer.Sound("sound\\haittyatta.ogg")
+                sound.set_volume(volume / 100)
+                sound.play()
             break
 
 def receive(volume, OGGlist, MP3list):
@@ -56,17 +77,9 @@ def receive(volume, OGGlist, MP3list):
             send_name = tmp_sname.split("!")
             tmp_fname = re.sub(r"^:", "", msg[3])
             filename = re.sub(r"\\r\\n'$", "", tmp_fname)
-            if filename in OGGlist: 
-                print(send_name[0] + ":" + filename)
-                sound = mixer.Sound("sound/" + filename + ".ogg")
-                sound.set_volume(volume / 100)
-                sound.play()
-            elif filename in MP3list:
-                print(send_name[0] + ":" + filename)
-                mixer.music.load("sound/csr/" + filename + ".mp3")
-                mixer.music.play()
+            play(send_name[0], filename)
                 
-
+                
 def keyhook(NICKNAME, volume, OGGlist, MP3list):
     while True:
         hk = Hook()  # make a new instance of PyHooked
@@ -75,34 +88,69 @@ def keyhook(NICKNAME, volume, OGGlist, MP3list):
 
 def handle_events(args):
     global str_input
+    global sound
 
     if isinstance(args, KeyboardEvent):
         if args.current_key == 'Return' and args.event_type == 'key up':
-            if str_input in OGGlist: 
-                print(NICKNAME + ':' + str_input)
-                send_msg(str_input)
-                sound = mixer.Sound("sound/" + str_input + ".ogg")
-                sound.set_volume(volume / 100)
-                sound.play()
-            elif str_input in MP3list:
-                print(NICKNAME + ':' + str_input)
-                send_msg(str_input)
-                mixer.music.load("sound/csr/" + str_input + ".mp3")
-                mixer.music.play()
+            if str_input == 'stop':
+                mixer.music.stop()
+                sound.stop()
+            else:
+                play(NICKNAME, str_input)
             str_input = ''
+        elif args.current_key == 'V' and args.event_type == 'key up' and 'Lcontrol' in args.pressed_key:
+            str_input = pyperclip.paste()
+        elif args.current_key == 'C' and args.event_type == 'key up' and 'Lcontrol' in args.pressed_key:
+            sys,exit()
         elif args.current_key == 'Back' and args.event_type == 'key up':
             str_input = str_input[:-1]
         elif (65 <= args.key_code and args.key_code <= 90) and args.event_type == 'key up':
             str_input = str_input + args.current_key.lower()
         elif (48 <= args.key_code and args.key_code <= 57) and args.event_type == 'key up':
-            str_input += args.current_key
+            str_input = str_input + args.current_key
         elif (96 <= args.key_code and args.key_code <= 105) and args.event_type == 'key up':
             str_input += args.current_key[-1]
         elif args.current_key == 'Oem_Minus' and args.event_type == 'key up':
             str_input += '-'
         elif args.current_key == 'Oem_7' and args.event_type == 'key up':
             str_input += '^'
-        
+
+
+def play(name, command):
+    global sound
+
+    if command in OGGlist: 
+        print(name + ":" + command)
+        if os.path.exists("sound/" + command + ".ogg"):
+            sound = mixer.Sound("sound/" + command + ".ogg")
+            sound.set_volume(volume / 100)
+            sound.play()
+    elif command in MP3list:
+        print(name + ":" + command)
+        if os.path.exists("sound/csr/" + command + ".mp3"):
+            mixer.music.load("sound/csr/" + command + ".mp3")
+            mixer.music.set_volume(volume / 100)
+            mixer.music.play()    
+    elif len(command) == 11 :
+        print(name + ":" + command)
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'logger': MyLogger(),
+        'progress_hooks': [my_hook],
+        }
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download(['http://www.youtube.com/watch?v=' + command])
+        path = glob.glob('*.mp3')
+        if os.path.exists(path[0]):
+            mixer.music.load(path[0])
+            mixer.music.set_volume(volume / 100)
+            mixer.music.play()
+
 
 if __name__ == '__main__':
     CHARCODE = 'iso2022_jp'
@@ -139,7 +187,6 @@ if __name__ == '__main__':
     MP3list.sort()
     
     volume = config.getfloat("Other", "volume")
-    mixer.music.set_volume(volume / 100)
 
     wait_connection(volume)
 
@@ -147,5 +194,3 @@ if __name__ == '__main__':
     th_keyhook.start()
 
     receive(volume, OGGlist, MP3list)
-
-    #while True None
