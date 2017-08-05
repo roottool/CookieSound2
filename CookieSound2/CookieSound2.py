@@ -20,29 +20,29 @@ def irc_conn():
 
 #send login data (customizable)
 def login(nickname, username='user', password = None, realname='Marina', hostname='Helena', servername='Server'):
-    send_data("USER %s %s %s %s" % (username, hostname, servername, realname))
-    send_data("NICK " + nickname)
+    send_data('USER %s %s %s %s' % (username, hostname, servername, realname))
+    send_data('NICK ' + nickname)
 
 #join the channel
 def join(channel):
-    send_data("JOIN %s" % channel)
+    send_data('JOIN %s' % channel)
 
 #simple function to send data through the socket
 def send_data(command):
-    status = IRC.send(bytes((command + "\r\n").encode(CHARCODE))) # unicode -> iso2022_jp
+    status = IRC.send(bytes((command + '\r\n').encode(CHARCODE))) # unicode -> iso2022_jp
     if status == -1 :raise Exception('send_data error', status)
 
 def send_msg(msg): # sends messages to the target.
-    IRC.send(bytes("PRIVMSG "+ CHANNEL +" :"+ msg +"\n", CHARCODE))
+    IRC.send(bytes('PRIVMSG '+ CHANNEL +' :'+ msg +'\n', CHARCODE))
 
 def wait_connection(volume):
     while(1):
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
-        if msg[3] == ":Welcome" and msg[2] == NICKNAME: #TODO splash screen
-            print("Join " + CHANNEL)
-            if os.path.exists("sound\\haittyatta.ogg"):
-                sound = mixer.Sound("sound\\haittyatta.ogg")
+        if msg[3] == ':Welcome' and msg[2] == NICKNAME: #TODO splash screen
+            print('Join ' + CHANNEL)
+            if os.path.exists('sound\\haittyatta.ogg'):
+                sound = mixer.Sound('sound\\haittyatta.ogg')
                 sound.set_volume(volume / 100)
                 sound.play()
             break
@@ -51,13 +51,13 @@ def receive(volume, soundvolume, OGGlist, MP3list):
     while True:
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
-        if msg[0] == "PING":                #check if server have sent ping command
-            send_data("PONG %s" % msg[1])   #answer with pong as per RFC 1459
+        if msg[0] == 'PING':                #check if server have sent ping command
+            send_data('PONG %s' % msg[1])   #answer with pong as per RFC 1459
         if msg[1] == 'PRIVMSG':
-            tmp_sname = re.sub(r"^b':", "", msg[0])
-            send_name = tmp_sname.split("!")
-            tmp_fname = re.sub(r"^:", "", msg[3])
-            filename = re.sub(r"\\r\\n'$", "", tmp_fname)
+            tmp_sname = re.sub(r"^b':", '', msg[0])
+            send_name = tmp_sname.split('!')
+            tmp_fname = re.sub(r"^:", '', msg[3])
+            filename = re.sub(r"\\r\\n'$", '', tmp_fname)
             play(send_name[0], filename, soundvolume)
                 
                 
@@ -76,8 +76,7 @@ def handle_events(args):
         if isInput == True and args.current_key == 'Return' and args.event_type == 'key up':
             print(str_input)
             isInput = False
-            if str_input == "stop":
-                print('test:' + soundvolume)
+            if str_input == 'stop':
                 mixer.music.stop()
                 sound.stop()
             else:
@@ -99,8 +98,8 @@ def handle_events(args):
         if isInput == False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
             print('u can input commands')
             isInput = True
-            if os.path.exists("sound/" + command + ".ogg"):
-                sound = mixer.Sound("sound/" + command + ".ogg")
+            if os.path.exists('sound/' + command + '.ogg'):
+                sound = mixer.Sound('sound/' + command + '.ogg')
                 sound.set_volume(volume / 100)
                 sound.play()
 
@@ -109,15 +108,15 @@ def play(name, command, soundvolume):
     global sound
 
     if command in OGGlist: 
-        print(name + ":" + command)
-        if os.path.exists("sound/" + command + ".ogg"):
-            sound = mixer.Sound("sound/" + command + ".ogg")
+        print(name + ':' + command)
+        if os.path.exists('sound/' + command + '.ogg'):
+            sound = mixer.Sound('sound/' + command + '.ogg')
             sound.set_volume(volume / 100)
             sound.play()
     elif command in MP3list:
-        print(name + ":" + command)
-        if os.path.exists("sound/csr/" + command + ".mp3"):
-            mixer.music.load("sound/csr/" + command + ".mp3")
+        print(name + ':' + command)
+        if os.path.exists('sound/csr/' + command + '.mp3'):
+            mixer.music.load('sound/csr/' + command + '.mp3')
             mixer.music.set_volume(soundvolume / 100)
             mixer.music.play()
 
@@ -126,15 +125,15 @@ if __name__ == '__main__':
     CHARCODE = 'iso2022_jp'
     
     config = configparser.RawConfigParser()
-    if os.path.exists("config.ini"):
-        config.read("config.ini")
+    if os.path.exists('config.ini'):
+        config.read('config.ini')
     else:
         sys.exit()
 
-    SERVER = config.get("Irc_server", "address")
-    PORT = config.getint("Irc_server", "port")
-    CHANNEL = config.get("Irc_server", "channel")
-    NICKNAME = config.get("Irc_server", "nickname")
+    SERVER = config.get('Irc_server', 'address')
+    PORT = config.getint('Irc_server', 'port')
+    CHANNEL = config.get('Irc_server', 'channel')
+    NICKNAME = config.get('Irc_server', 'nickname')
 
     HOOKKEY = config.get('Hook', 'hookkey')
     HOOKSOUND = config.get('Hook', 'hooksound')
@@ -154,12 +153,12 @@ if __name__ == '__main__':
     join(CHANNEL)
     
     OGGlist = []
-    for tmplist in glob.glob("sound/*.ogg") :
+    for tmplist in glob.glob('sound/*.ogg') :
         tmpf, ext = os.path.splitext(tmplist)
         OGGlist.append(os.path.basename(tmpf))
 
     MP3list = []
-    for tmplist in glob.glob("sound/csr/*.mp3") :
+    for tmplist in glob.glob('sound/csr/*.mp3') :
         tmpf, ext = os.path.splitext(tmplist)
         MP3list.append(os.path.basename(tmpf))
 
