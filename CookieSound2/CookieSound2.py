@@ -5,10 +5,11 @@ import os
 import time
 import glob
 import threading
-import configparser         #TODO Read config.ini all contents
+import configparser
 from pygame import mixer
 from pyhooked import Hook, KeyboardEvent
 
+isInput = False
 str_input = ''
 sound = None
 
@@ -46,7 +47,7 @@ def wait_connection(volume):
                 sound.play()
             break
 
-def receive(volume, OGGlist, MP3list):
+def receive(volume, soundvolume, OGGlist, MP3list):
     while True:
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
@@ -57,42 +58,54 @@ def receive(volume, OGGlist, MP3list):
             send_name = tmp_sname.split("!")
             tmp_fname = re.sub(r"^:", "", msg[3])
             filename = re.sub(r"\\r\\n'$", "", tmp_fname)
-            play(send_name[0], filename)
+            play(send_name[0], filename, soundvolume)
                 
                 
-def keyhook(NICKNAME, volume, OGGlist, MP3list):
+def keyhook(volume, soundvolume, OGGlist, MP3list):
     while True:
         hk = Hook()                 # make a new instance of PyHooked
         hk.handler = handle_events  # add a new shortcut ctrl+a, or triggered on mouseover of (300,400)
         hk.hook()                   # hook into the events, and listen to the presses
 
 def handle_events(args):
+    global isInput
     global str_input
     global sound
 
     if isinstance(args, KeyboardEvent):
-        if args.current_key == 'Return' and args.event_type == 'key up':
-            if str_input == 'stop':
+        if isInput == True and args.current_key == 'Return' and args.event_type == 'key up':
+            print(str_input)
+            isInput = False
+            if str_input == "stop":
+                print('test:' + soundvolume)
                 mixer.music.stop()
                 sound.stop()
             else:
-                play(NICKNAME, str_input)
+                play(NICKNAME, str_input, soundvolume)
             str_input = ''
-        elif args.current_key == 'Back' and args.event_type == 'key up':
+        elif isInput == True and args.current_key == 'Back' and args.event_type == 'key up':
             str_input = str_input[:-1]
-        elif (65 <= args.key_code and args.key_code <= 90) and args.event_type == 'key up':
+        elif isInput == True and (65 <= args.key_code and args.key_code <= 90) and args.event_type == 'key up':
             str_input = str_input + args.current_key.lower()
-        elif (48 <= args.key_code and args.key_code <= 57) and args.event_type == 'key up':
+        elif isInput == True and (48 <= args.key_code and args.key_code <= 57) and args.event_type == 'key up':
             str_input = str_input + args.current_key
-        elif (96 <= args.key_code and args.key_code <= 105) and args.event_type == 'key up':
+        elif isInput == True and (96 <= args.key_code and args.key_code <= 105) and args.event_type == 'key up':
             str_input += args.current_key[-1]
-        elif args.current_key == 'Oem_Minus' and args.event_type == 'key up':
+        elif isInput == True and args.current_key == 'Oem_Minus' and args.event_type == 'key up':
             str_input += '-'
-        elif args.current_key == 'Oem_7' and args.event_type == 'key up':
+        elif isInput == True and args.current_key == 'Oem_7' and args.event_type == 'key up':
             str_input += '^'
+  
+        if isInput == False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
+            print('u can input commands')
+            isInput = True
+            if os.path.exists("sound/" + command + ".ogg"):
+                sound = mixer.Sound("sound/" + command + ".ogg")
+                sound.set_volume(volume / 100)
+                sound.play()
 
 
-def play(name, command):
+def play(name, command, soundvolume):
     global sound
 
     if command in OGGlist: 
@@ -105,7 +118,7 @@ def play(name, command):
         print(name + ":" + command)
         if os.path.exists("sound/csr/" + command + ".mp3"):
             mixer.music.load("sound/csr/" + command + ".mp3")
-            mixer.music.set_volume(volume / 100)
+            mixer.music.set_volume(soundvolume / 100)
             mixer.music.play()
 
 
@@ -122,6 +135,16 @@ if __name__ == '__main__':
     PORT = config.getint("Irc_server", "port")
     CHANNEL = config.get("Irc_server", "channel")
     NICKNAME = config.get("Irc_server", "nickname")
+
+    HOOKKEY = config.get('Hook', 'hookkey')
+    HOOKSOUND = config.get('Hook', 'hooksound')
+    
+    isMP3play = config.get('Other', 'bgm')
+    volume = config.getfloat('Other', 'volume')
+    if isMP3play.capitalize() == 'True':
+        soundvolume = config.getfloat('Other', 'volume')
+    else:
+        soundvolume = 0
 
     #open a socket to handle the connection
     IRC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -142,12 +165,10 @@ if __name__ == '__main__':
 
     OGGlist.sort()
     MP3list.sort()
-    
-    volume = config.getfloat("Other", "volume")
 
     wait_connection(volume)
 
-    th_keyhook = threading.Thread(target=keyhook, args=(NICKNAME, volume, OGGlist, MP3list))
+    th_keyhook = threading.Thread(target=keyhook, args=(volume, soundvolume, OGGlist, MP3list))
     th_keyhook.start()
 
-    receive(volume, OGGlist, MP3list)
+    receive(volume, soundvolume, OGGlist, MP3list)
