@@ -72,7 +72,7 @@ def receive(volume, OGGlist, MP3list):
         msg = str.split(str(buffer))
         if msg[0] == "PING":                #check if server have sent ping command
             send_data("PONG %s" % msg[1])   #answer with pong as per RFC 1459
-        if msg[1] == 'PRIVMSG':
+        elif msg[1] == 'PRIVMSG':
             tmp_sname = re.sub(r"^b':", "", msg[0])
             send_name = tmp_sname.split("!")
             tmp_fname = re.sub(r"^:", "", msg[3])
@@ -118,6 +118,11 @@ def handle_events(args):
 
 def play(name, command):
     global sound
+    
+    path = glob.glob('*.mp3')
+    if len(path) > 0:
+        for path_num in path:
+            os.remove(path[path_num])
 
     if command in OGGlist: 
         print(name + ":" + command)
@@ -133,6 +138,7 @@ def play(name, command):
             mixer.music.play()    
     elif len(command) == 11 :
         print(name + ":" + command)
+
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -144,10 +150,12 @@ def play(name, command):
         'progress_hooks': [my_hook],
         }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            ydl.download(['http://www.youtube.com/watch?v=' + command])
+            ydl.download(['https://www.youtube.com/watch?v=' + command])#TODO アドレスコピペに変更、ファイル名をIDのみとする
         path = glob.glob('*.mp3')
         if os.path.exists(path[0]):
-            mixer.music.load(path[0])
+            os.rename(path[0],path[0][-15:])
+            print(path[0][-15:])
+            mixer.music.load(path[0][-15:])
             mixer.music.set_volume(volume / 100)
             mixer.music.play()
 

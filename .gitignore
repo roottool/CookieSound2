@@ -266,3 +266,6 @@ __pycache__/
 /CookieSound2/setup.py
 /CookieSound2/setup - コピー.py
 /CookieSound2/build
+/CookieSound2/ffprobe.exe
+/CookieSound2/ffmpeg.exe
+/CookieSound2/dist
