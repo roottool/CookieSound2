@@ -51,7 +51,7 @@ def receive(volume, soundvolume, OGGlist, MP3list):
     while True:
         buffer = IRC.recv(1024)
         msg = str.split(str(buffer))
-        if msg[0] == 'PING':                #check if server have sent ping command
+        if msg[0] == "b'PING":                #check if server have sent ping command
             send_data('PONG %s' % msg[1])   #answer with pong as per RFC 1459
         if msg[1] == 'PRIVMSG':
             tmp_sname = re.sub(r"^b':", '', msg[0])
@@ -74,7 +74,6 @@ def handle_events(args):
 
     if isinstance(args, KeyboardEvent):
         if isInput == True and args.current_key == 'Return' and args.event_type == 'key up':
-            print(str_input)
             isInput = False
             if str_input == 'stop':
                 mixer.music.stop()
@@ -98,8 +97,8 @@ def handle_events(args):
         if isInput == False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
             print('u can input commands')
             isInput = True
-            if os.path.exists('sound/' + command + '.ogg'):
-                sound = mixer.Sound('sound/' + command + '.ogg')
+            if os.path.exists('sound/' + HOOKSOUND + '.ogg'):
+                sound = mixer.Sound('sound/' + HOOKSOUND + '.ogg')
                 sound.set_volume(volume / 100)
                 sound.play()
 
