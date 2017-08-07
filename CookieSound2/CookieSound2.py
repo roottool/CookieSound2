@@ -41,10 +41,7 @@ def wait_connection(volume):
         msg = str.split(str(buffer))
         if msg[3] == ':Welcome' and msg[2] == NICKNAME: #TODO splash screen
             print('Join ' + CHANNEL)
-            if os.path.exists('sound\\haittyatta.ogg'):
-                sound = mixer.Sound('sound\\haittyatta.ogg')
-                sound.set_volume(volume / 100)
-                sound.play()
+            play(None, 'haittyatta', 0)
             break
 
 def receive(volume, soundvolume, OGGlist, MP3list):
@@ -97,25 +94,24 @@ def handle_events(args):
         if isInput == False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
             print('u can input commands')
             isInput = True
-            if os.path.exists('sound/' + HOOKSOUND + '.ogg'):
-                sound = mixer.Sound('sound/' + HOOKSOUND + '.ogg')
-                sound.set_volume(volume / 100)
-                sound.play()
+            play(None, HOOKSOUND, 0)
 
 
 def play(name, command, soundvolume):
     global sound
 
     if command in OGGlist: 
-        print(name + ':' + command)
-        if os.path.exists('sound/' + command + '.ogg'):
-            sound = mixer.Sound('sound/' + command + '.ogg')
+        if name != None:
+            print(name + ':' + command)
+        if os.path.exists(OGGlist[command]):
+            sound = mixer.Sound(OGGlist[command])
             sound.set_volume(volume / 100)
             sound.play()
     elif command in MP3list:
-        print(name + ':' + command)
-        if os.path.exists('sound/csr/' + command + '.mp3'):
-            mixer.music.load('sound/csr/' + command + '.mp3')
+        if name != None:
+            print(name + ':' + command)
+        if os.path.exists(MP3list[command]):
+            mixer.music.load(MP3list[command])
             mixer.music.set_volume(soundvolume / 100)
             mixer.music.play()
 
@@ -151,18 +147,17 @@ if __name__ == '__main__':
     login(NICKNAME)
     join(CHANNEL)
     
-    OGGlist = []
+ 
+    OGGlist = {}
     for tmplist in glob.glob('sound/*.ogg') :
         tmpf, ext = os.path.splitext(tmplist)
-        OGGlist.append(os.path.basename(tmpf))
-
-    MP3list = []
+        OGGlist[tmpf[6:]] = tmpf + ext
+    
+    MP3list = {}
     for tmplist in glob.glob('sound/csr/*.mp3') :
         tmpf, ext = os.path.splitext(tmplist)
-        MP3list.append(os.path.basename(tmpf))
+        MP3list[tmpf[10:]] = tmpf + ext
 
-    OGGlist.sort()
-    MP3list.sort()
 
     wait_connection(volume)
 
