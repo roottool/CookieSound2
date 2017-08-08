@@ -10,6 +10,7 @@ import sys
 from pygame import mixer
 from pyhooked import Hook, KeyboardEvent
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from mainform import Ui_Form
 
@@ -138,6 +139,13 @@ if __name__ == '__main__':
     CHARCODE = 'iso2022_jp'
     
     app = QApplication(sys.argv)
+
+    # Create and display the splash screen
+    splash_pix = QPixmap('splash.png')
+    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+    splash.setMask(splash_pix.mask())
+    splash.show()
+    app.processEvents()
     
     config = configparser.RawConfigParser()
     if os.path.exists('config.ini'):
@@ -189,4 +197,5 @@ if __name__ == '__main__':
 
     window = MainForm()
     window.show()
+    splash.finish(window)
     sys.exit(app.exec_())
