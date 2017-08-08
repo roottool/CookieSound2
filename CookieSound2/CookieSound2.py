@@ -6,12 +6,30 @@ import time
 import glob
 import threading
 import configparser
+import sys
 from pygame import mixer
 from pyhooked import Hook, KeyboardEvent
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from mainform import Ui_Form
 
 isInput = False
 str_input = ''
 sound = None
+
+
+class MainForm(QDialog):
+    def __init__(self,parent=None):
+        super(MainForm, self).__init__(parent)
+        self.ui = Ui_Form()
+        self.ui.setupUi(self)
+
+        self.ui.pushButton.clicked.connect(self.buttonClicked)
+
+    def buttonClicked(self):
+        sender = self.sender()
+        self.ui.label.setText("puha")
+        play(None, 'puha', 0)
 
 
 #open a connection with the server
@@ -119,6 +137,8 @@ def play(name, command, soundvolume):
 if __name__ == '__main__':
     CHARCODE = 'iso2022_jp'
     
+    app = QApplication(sys.argv)
+    
     config = configparser.RawConfigParser()
     if os.path.exists('config.ini'):
         config.read('config.ini')
@@ -164,4 +184,9 @@ if __name__ == '__main__':
     th_keyhook = threading.Thread(target=keyhook, args=(volume, soundvolume, OGGlist, MP3list))
     th_keyhook.start()
 
-    receive(volume, soundvolume, OGGlist, MP3list)
+    th_receive = threading.Thread(target=receive, args=(volume, soundvolume, OGGlist, MP3list))
+    th_receive.start()
+
+    window = MainForm()
+    window.show()
+    sys.exit(app.exec_())
