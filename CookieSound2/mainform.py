@@ -13,6 +13,7 @@ class Ui_Form(object):
         Form.setObjectName("Form")
         Form.resize(270, 450)
         Form.setMaximumSize(QtCore.QSize(270, 16777215))
+        Form.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
         self.label = QtWidgets.QLabel(Form)
         self.label.setGeometry(QtCore.QRect(0, 30, 270, 421))
         self.label.setMinimumSize(QtCore.QSize(270, 400))

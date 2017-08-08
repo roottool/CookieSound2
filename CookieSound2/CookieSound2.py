@@ -16,6 +16,7 @@ from mainform import Ui_Form
 
 isInput = False
 str_input = ''
+log = ''
 sound = None
 
 
@@ -23,6 +24,7 @@ class MainForm(QDialog):
     def __init__(self,parent=None):
         super(MainForm, self).__init__(parent)
         self.ui = Ui_Form()
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.ui.setupUi(self)
 
     def statsCheck(self):
@@ -32,6 +34,11 @@ class MainForm(QDialog):
             self.ui.InputLabel.setText(str_input)
         else:
             self.ui.InputLabel.setText("Waiting for typing hookkey")
+
+    def updatelog(self):
+        global log
+
+        self.ui.Label.setText(log)
 
 
 #open a connection with the server
@@ -112,18 +119,19 @@ def handle_events(args):
             str_input += '^'
   
         if isInput == False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
-            print('u can input a command')
             isInput = True
             play(None, HOOKSOUND, 0)
         window.statsCheck()
 
 
 def play(name, command, soundvolume):
+    global log
     global sound
 
     if command in OGGlist: 
         if name != None:
             print(name + ':' + command)
+            log += name + ':' + command + '\r\n'
         if os.path.exists(OGGlist[command]):
             sound = mixer.Sound(OGGlist[command])
             sound.set_volume(volume / 100)
@@ -131,6 +139,7 @@ def play(name, command, soundvolume):
     elif command in MP3list:
         if name != None:
             print(name + ':' + command)
+            log += name + ':' + command + '\r\n'
         if os.path.exists(MP3list[command]):
             mixer.music.load(MP3list[command])
             mixer.music.set_volume(soundvolume / 100)
@@ -143,7 +152,10 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Create and display the splash screen
-    splash_pix = QPixmap('splash.png')
+    if os.path.exists('splash.png'):
+        splash_pix = QPixmap('splash.png')
+    else:
+        splash_pix = QPixmap('')
     splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
     splash.show()
     
