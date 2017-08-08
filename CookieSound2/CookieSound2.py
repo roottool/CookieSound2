@@ -16,7 +16,6 @@ from mainform import Ui_Form
 
 isInput = False
 str_input = ''
-log = ''
 sound = None
 
 
@@ -29,16 +28,11 @@ class MainForm(QDialog):
 
     def statsCheck(self):
         if isInput == True and str_input == '':
-            self.ui.InputLabel.setText("u can input a command")
+            self.ui.InputLabel.setText("You can input a command")
         elif isInput == True:
             self.ui.InputLabel.setText(str_input)
         else:
             self.ui.InputLabel.setText("Waiting for typing hookkey")
-
-    def updatelog(self):
-        global log
-
-        self.ui.Label.setText(log)
 
 
 #open a connection with the server
@@ -131,7 +125,6 @@ def play(name, command, soundvolume):
     if command in OGGlist: 
         if name != None:
             print(name + ':' + command)
-            log += name + ':' + command + '\r\n'
         if os.path.exists(OGGlist[command]):
             sound = mixer.Sound(OGGlist[command])
             sound.set_volume(volume / 100)
@@ -139,7 +132,6 @@ def play(name, command, soundvolume):
     elif command in MP3list:
         if name != None:
             print(name + ':' + command)
-            log += name + ':' + command + '\r\n'
         if os.path.exists(MP3list[command]):
             mixer.music.load(MP3list[command])
             mixer.music.set_volume(soundvolume / 100)
@@ -186,18 +178,15 @@ if __name__ == '__main__':
     irc_conn()
     login(NICKNAME)
     join(CHANNEL)
-    
  
     OGGlist = {}
     for tmplist in glob.glob('sound/*.ogg') :
         tmpf, ext = os.path.splitext(tmplist)
         OGGlist[tmpf[6:]] = tmpf + ext
-    
     MP3list = {}
     for tmplist in glob.glob('sound/csr/*.mp3') :
         tmpf, ext = os.path.splitext(tmplist)
         MP3list[tmpf[10:]] = tmpf + ext
-
 
     wait_connection(volume)
     
@@ -207,7 +196,8 @@ if __name__ == '__main__':
 
     th_receive = threading.Thread(target=receive, args=(volume, soundvolume, OGGlist, MP3list))
     th_receive.start()
-
+    
     window.show()
     splash.finish(window)
-    sys.exit(app.exec_())
+    app.exec_()
+    sys.exit()
