@@ -25,12 +25,13 @@ class MainForm(QDialog):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        self.ui.pushButton.clicked.connect(self.buttonClicked)
-
-    def buttonClicked(self):
-        sender = self.sender()
-        self.ui.label.setText("puha")
-        play(None, 'puha', 0)
+    def statsCheck(self):
+        if isInput == True and str_input == '':
+            self.ui.InputLabel.setText("u can input a command")
+        elif isInput == True:
+            self.ui.InputLabel.setText(str_input)
+        else:
+            self.ui.InputLabel.setText("Waiting for typing hookkey")
 
 
 #open a connection with the server
@@ -111,9 +112,10 @@ def handle_events(args):
             str_input += '^'
   
         if isInput == False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
-            print('u can input commands')
+            print('u can input a command')
             isInput = True
             play(None, HOOKSOUND, 0)
+        window.statsCheck()
 
 
 def play(name, command, soundvolume):
@@ -143,9 +145,7 @@ if __name__ == '__main__':
     # Create and display the splash screen
     splash_pix = QPixmap('splash.png')
     splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setMask(splash_pix.mask())
     splash.show()
-    app.processEvents()
     
     config = configparser.RawConfigParser()
     if os.path.exists('config.ini'):
@@ -188,14 +188,14 @@ if __name__ == '__main__':
 
 
     wait_connection(volume)
-
+    
+    window = MainForm()
     th_keyhook = threading.Thread(target=keyhook, args=(volume, soundvolume, OGGlist, MP3list))
     th_keyhook.start()
 
     th_receive = threading.Thread(target=receive, args=(volume, soundvolume, OGGlist, MP3list))
     th_receive.start()
 
-    window = MainForm()
     window.show()
     splash.finish(window)
     sys.exit(app.exec_())

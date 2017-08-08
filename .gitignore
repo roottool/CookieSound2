@@ -259,12 +259,8 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-/CookieSound2/cookiesound.png
 /CookieSound2/sound
 /CookieSound2/config.ini
-/CookieSound2/build/exe.win-amd64-3.6
-/CookieSound2/setup.py
-/CookieSound2/setup - コピー.py
 /CookieSound2/build
 /CookieSound2/desktop.ini
 /CookieSound2/CookieSound2.spec
@@ -272,3 +268,4 @@ __pycache__/
 /CookieSound2/ffprobe.exe
 /CookieSound2/ffmpeg.exe
 /CookieSound2/background.png
+/CookieSound2/setup.py
