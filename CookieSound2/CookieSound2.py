@@ -35,11 +35,15 @@ class MainForm(QDialog):
 
 
 # open a connection with the server
-def irc_conn():
-    IRC.connect((SERVER, PORT))
+def irc_conn(server, port):
+    IRC.connect((server, port))
 
 # send login data (customizable)
-def login(nickname, username='user', password = None, realname='Marina', hostname='Helena', servername='Server'):
+def login(nickname):
+    username='user'
+    hostname='Helena'
+    servername='Server'
+    realname='Marina'
     send_data('USER %s %s %s %s' % (username, hostname, servername, realname))
     send_data('NICK ' + nickname)
 
@@ -119,14 +123,14 @@ def play(name, command, soundvolume):
         mixer.quit()
         mixer.init()
     elif command in OGGlist: 
-        if name != None:
+        if name is not None:
             print(name + ':' + command)
         if os.path.exists(OGGlist[command]):
             sound = mixer.Sound(OGGlist[command])
             sound.set_volume(volume / 100)
             sound.play()
     elif command in MP3list:
-        if name != None:
+        if name is not None:
             print(name + ':' + command)
         if os.path.exists(MP3list[command]):
             mixer.music.load(MP3list[command])
@@ -171,7 +175,7 @@ if __name__ == '__main__':
     #open a socket to handle the connection
     IRC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     mixer.init()
-    irc_conn()
+    irc_conn(SERVER, PORT)
     login(NICKNAME)
     join(CHANNEL)
  
