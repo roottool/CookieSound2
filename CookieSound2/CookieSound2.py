@@ -66,7 +66,6 @@ def wait_connection(volume):
         msg = str.split(str(buffer))
         if msg[3] == ':Welcome' and msg[2] == NICKNAME: #TODO splash screen
             print('Join ' + CHANNEL)
-            play(None, 'haittyatta', 0)
             break
 
 def receive(volume, soundvolume, OGGlist, MP3list):
@@ -93,21 +92,21 @@ def handle_events(args):
     global str_input
 
     if isinstance(args, KeyboardEvent):
-        if isInput == True and args.current_key == 'Return' and args.event_type == 'key up':
+        if isInput is True and args.current_key == 'Return' and args.event_type == 'key up':
             isInput = False
             play(NICKNAME, str_input, soundvolume)
             str_input = ''
         elif isInput is True and args.current_key == 'Back' and args.event_type == 'key up':
             str_input = str_input[:-1]
-        elif isInput is True and (65 <= args.key_code <= 90) and args.event_type == 'key up':
+        elif isInput is True and (65 <= args.key_code <= 90) and args.event_type == 'key up':           #A-Z
             str_input = str_input + args.current_key.lower()
-        elif isInput is True and (48 <= args.key_code <= 57) and args.event_type == 'key up':
+        elif isInput is True and (48 <= args.key_code <= 57) and args.event_type == 'key up':           #0-9
             str_input = str_input + args.current_key
-        elif isInput is True and (96 <= args.key_code <= 105) and args.event_type == 'key up':
+        elif isInput is True and (96 <= args.key_code <= 105) and args.event_type == 'key up':          #テンキーの0-9
             str_input += args.current_key[-1]
-        elif isInput is True and args.current_key == 'Oem_Minus' and args.event_type == 'key up':
+        elif isInput is True and args.current_key == 'Oem_Minus' and args.event_type == 'key up':       #- TODO:テンキーの-対応
             str_input += '-'
-        elif isInput is True and args.current_key == 'Oem_7' and args.event_type == 'key up':
+        elif isInput is True and args.current_key == 'Oem_7' and args.event_type == 'key up':           #^
             str_input += '^'
   
         if isInput is False and args.current_key == HOOKKEY.upper() and args.event_type == 'key up':
