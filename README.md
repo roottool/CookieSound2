@@ -7,13 +7,13 @@ Cookie☆☆Sound、C#からPythonへ
 
 # 主な機能
 
- - 音量調整
+ - 音量調整<br>
  config.iniファイルから0～100の整数で調節可能です。
 
- - 再生の停止
+ - 再生の停止<br>
  コマンド入力待機状態でstopと入力すると現在再生されている音声が停止します。
 
- - BGM再生機能(Cookie☆ Sound Records:CSR)
+ - BGM再生機能(Cookie☆ Sound Records:CSR)<br>
  csrフォルダ内に格納されているcsr番号.mp3ファイルのBGMを通常のコマンドとは別に再生を行います。(ファイル名指定はCookie☆Soundの仕様と合わせるため)<br>
  再生中に別の番号のコマンドが入力された際には、現在再生しているBGMを停止して入力されたBGMを再生する。
    
